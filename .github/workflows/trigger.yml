@@ -1,0 +1,36 @@
+name: Manual Trigger PoC
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'A message to include in the output'
+        required: false
+        default: 'Hello from the CLI!'
+
+jobs:
+  generate-output:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate JSON Output
+        run: |
+          echo "Generating JSON output..."
+          cat <<EOF > output.json
+          {
+            "status": "success",
+            "message": "${{ github.event.inputs.message }}",
+            "actor": "${{ github.actor }}",
+            "run_id": "${{ github.run_id }}",
+            "repository": "${{ github.repository }}"
+          }
+          EOF
+          
+          # Print for debugging
+          cat output.json
+
+      - name: Upload Output Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-output
+          path: output.json
+          retention-days: 1

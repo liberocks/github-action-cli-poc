@@ -6,7 +6,7 @@ import io
 import requests
 
 # CONFIGURATION
-CLIENT_ID = "YOUR_OAUTH_APP_CLIENT_ID"
+CLIENT_ID = "Ov23lixh0Jo1iw0PIVRw"
 REPO_OWNER = "liberocks"
 REPO_NAME = "github-action-cli-poc"
 WORKFLOW_FILE = "trigger.yml"
@@ -116,8 +116,11 @@ def get_latest_workflow_run(token, actor):
         if data["total_count"] > 0:
             run = data["workflow_runs"][0]
             # Verify the run is recent
-            run_time = time.mktime(time.strptime(run["created_at"], "%Y-%m-%dT%H:%M:%SZ"))
-            if time.time() - run_time < 300: # within 5 minutes
+            import datetime
+            run_time = datetime.datetime.strptime(run["created_at"], "%Y-%m-%dT%H:%M:%SZ")
+            run_time = run_time.replace(tzinfo=datetime.timezone.utc)
+            now = datetime.datetime.now(datetime.timezone.utc)
+            if (now - run_time).total_seconds() < 300: # within 5 minutes
                 return run
     print("Failed to locate the workflow run.")
     sys.exit(1)

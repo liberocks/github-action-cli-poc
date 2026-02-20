@@ -13,12 +13,15 @@ WORKFLOW_FILE = "trigger.yml"
 
 def request_device_code():
     print("Requesting device code from GitHub...")
+    
+    # For GitHub Apps, we don't need to specify 'scope'. 
+    # The token permissions will be the intersection of the App's permissions 
+    # and the authenticating user's permissions on the repo the App is installed in.
     response = requests.post(
         "https://github.com/login/device/code",
         headers={"Accept": "application/json"},
         data={
-            "client_id": CLIENT_ID,
-            "scope": "repo"
+            "client_id": CLIENT_ID
         }
     )
     response.raise_for_status()

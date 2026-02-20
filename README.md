@@ -2,7 +2,9 @@
 
 This Proof of Concept demonstrates how to create a Python CLI to securely authenticate team members and trigger a GitHub Action workflow using **GitHub OAuth Device Authorization Flow**.
 
-By using OAuth Device Flow, you **do not need to distribute static Personal Access Tokens (PATs) or static credentials** to your team. Instead, the CLI directs them to an authentication URL in their browser, generating a short-lived access token on the fly. This ensures that only users who genuinely have access to the repository on GitHub can trigger the workflows.
+By using the **GitHub App Device Flow**, you **do not need to distribute static Personal Access Tokens (PATs) or static credentials** to your team. Instead, the CLI directs them to an authentication URL in their browser, generating a short-lived access token on the fly. 
+
+Because we use a **GitHub App installed only on this repository**, the resulting authentication token is strictly scoped. Even if the user belongs to many organizations, the CLI token will **only** have access to the repository where the App is installed.
 
 ## Prerequisites
 
@@ -13,18 +15,24 @@ By using OAuth Device Flow, you **do not need to distribute static Personal Acce
 pip install requests
 ```
 
-## How to Set up the GitHub OAuth App
+## How to Set up the GitHub App (For Scoped Access)
 
-Because you are using the Device Flow, you must register an OAuth App in your GitHub Developer Settings. **This cannot be done via API and must be done in the Web UI.**
+To ensure the CLI only has access to this specific repository and not all the organizations a user belongs to, we use a **GitHub App** rather than an OAuth App. **This must be set up in the Web UI.**
 
-1. Go to your GitHub Settings -> Developer settings -> **[OAuth Apps](https://github.com/settings/developers)**.
-2. Click **New OAuth App**.
+1. Go to your GitHub Settings -> Developer settings -> **[GitHub Apps](https://github.com/settings/apps)**.
+2. Click **New GitHub App**.
 3. Fill in the details:
-   - **Application name**: e.g., "My Team CLI Automator"
+   - **GitHub App name**: e.g., "My Team CLI Automator"
    - **Homepage URL**: e.g., `https://github.com/YOUR_ORG`
-   - **Authorization callback URL**: Since this is a CLI using the device flow, a callback URL isn't strictly used, but you must enter one. A generic placeholder like `http://localhost:8080` is fine.
-4. **Important**: After creating the app, click **Enable Device Flow** on the app's configuration page under the "Device flow" section.
-5. Copy the **Client ID** generated for your application.
+   - **Webhook**: Uncheck "Active" (we don't need webhooks).
+4. Under **Repository permissions**, find **Actions** and change it to **Read and write**.
+   *(No other permissions are required!)*
+5. Click **Create GitHub App**.
+6. On the left sidebar, click **Install App**.
+7. Install the App **Only on the specific repository** (e.g. `github-action-cli-poc`). This is what restricts the access!
+8. Go back to the App's **General** settings page.
+9. Scroll down to **Device flow** and click **Enable Device Flow**.
+10. Copy the **Client ID** generated for your application.
 
 ## Configuration
 

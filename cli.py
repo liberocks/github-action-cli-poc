@@ -187,16 +187,59 @@ def download_and_parse_artifact(token, run_id):
     except Exception as e:
         print(f"Error extracting or parsing artifact: {e}")
 
+import os
+
+TOKEN_FILE = ".github_token.json"
+
+def get_cached_token():
+    if os.path.exists(TOKEN_FILE):
+        try:
+            with open(TOKEN_FILE, "r") as f:
+                data = json.load(f)
+                return data.get("access_token")
+        except Exception:
+            pass
+    return None
+
+def save_token(token):
+    with open(TOKEN_FILE, "w") as f:
+        json.dump({"access_token": token}, f)
+    # Give it restrictive permissions so others can't read it
+    os.chmod(TOKEN_FILE, 0o600)
+
+def is_token_valid(token):
+    try:
+        # A simple request to check if the token works
+        response = requests.get(
+            "https://api.github.com/user",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+        )
+        return response.status_code == 200
+    except Exception:
+        return False
+
 def main():
     if CLIENT_ID == "YOUR_OAUTH_APP_CLIENT_ID":
         print("ERROR: Please configure the CLIENT_ID in cli.py before running.")
         sys.exit(1)
         
-    # 1. Device Code Request
-    device_data = request_device_code()
-    
-    # 2. Poll for token
-    token = poll_for_token(device_data["device_code"], device_data["interval"])
+    token = get_cached_token()
+    if token and is_token_valid(token):
+        print("Using cached authentication token.")
+    else:
+        if token:
+            print("Cached token is invalid or expired. Re-authenticating...")
+        # 1. Device Code Request
+        device_data = request_device_code()
+        
+        # 2. Poll for token
+        token = poll_for_token(device_data["device_code"], device_data["interval"])
+        
+        # Save it for next time
+        save_token(token)
     
     # 3. Get current user's login name so we can filter runs
     actor = get_current_user(token)
